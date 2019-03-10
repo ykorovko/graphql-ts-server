@@ -1,11 +1,13 @@
 import * as fs from "fs";
 import * as path from "path";
+import * as Redis from "ioredis";
 import { GraphQLSchema } from "graphql";
 import { GraphQLServer } from "graphql-yoga";
 import { mergeSchemas, makeExecutableSchema } from "graphql-tools";
 import { importSchema } from "graphql-import";
 
 import createTypeormConn from "./utils/createTypeormConn";
+import { Users } from "./entity/Users";
 
 /**
  * TODO:
@@ -31,8 +33,29 @@ export const startServer = async () => {
     schemas.push(makeExecutableSchema({ resolvers, typeDefs }));
   });
 
+  const redis = new Redis();
+
   const server = new GraphQLServer({
-    schema: mergeSchemas({ schemas })
+    schema: mergeSchemas({ schemas }),
+    context: (request: any) => ({
+      redis,
+      url: request.protocol + "://" + request.get("host")
+    })
+  });
+
+  // Endpoint for confirmation email
+  server.express.get("/confirm/:id", async (req, res) => {
+    const { id } = req.params;
+
+    const userId = await redis.get(id);
+
+    if (userId) {
+      await Users.update({ id: userId }, { confirmed: true });
+
+      res.send("Ok");
+    } else {
+      res.send("Invalid");
+    }
   });
 
   // Creating Typeorm connection

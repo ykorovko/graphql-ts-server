@@ -5,6 +5,7 @@ import { ResolveMap } from "../../types/graphql-utils";
 import { GQL } from "../../types/schema";
 import { Users } from "../../entity/Users";
 import { validationErrors } from "../../utils/validationErrors";
+import { createConfirmationEmailLink } from "../../utils/createConfirmationEmailLink";
 import {
   invalidEmail,
   duplicateEmail,
@@ -30,7 +31,11 @@ export const resolvers: ResolveMap = {
   },
 
   Mutation: {
-    register: async (_, args: GQL.IRegisterOnMutationArguments) => {
+    register: async (
+      _,
+      args: GQL.IRegisterOnMutationArguments,
+      { redis, url }
+    ) => {
       try {
         await schema.validate(args, { abortEarly: false });
       } catch (error) {
@@ -62,6 +67,9 @@ export const resolvers: ResolveMap = {
       console.log("user :", user);
 
       await user.save();
+
+      const link = await createConfirmationEmailLink(url, user.id, redis);
+
       return null;
     }
   }
