@@ -1,11 +1,10 @@
 import * as faker from "faker";
-import { Server as HttpServer } from "http";
-import { Server as HttpsServer } from "https";
-import { AddressInfo } from "net";
 import { request } from "graphql-request";
-import { getConnection } from "typeorm";
-
-import { startServer } from "../../startServer";
+// import { Server as HttpServer } from "http";
+// import { Server as HttpsServer } from "https";
+// import { AddressInfo } from "net";
+// import { getConnection } from "typeorm";
+// import { startServer } from "../../startServer";
 import { Users } from "../../entity/Users";
 import {
   invalidEmail,
@@ -14,8 +13,8 @@ import {
   passwordNotLongEnough
 } from "./errorMessages";
 
-let app: HttpServer | HttpsServer;
-let host = "";
+// let app: HttpServer | HttpsServer;
+const host = process.env.TEST_HOST as string;
 
 const email = faker.internet.email();
 const password = faker.internet.password();
@@ -39,20 +38,20 @@ mutation {
  */
 
 describe("Register user", () => {
-  beforeAll(async () => {
-    app = await startServer();
+  // beforeAll(async () => {
+  //   app = await startServer();
 
-    const { port } = app.address() as AddressInfo;
+  //   const { port } = app.address() as AddressInfo;
 
-    host = `http://127.0.0.1:${port}`;
-  });
+  //   host = `http://127.0.0.1:${port}`;
+  // });
 
-  afterAll(async () => {
-    await getConnection().close();
-    await app.close();
-  });
+  // afterAll(async () => {
+  //   await getConnection().close();
+  //   await app.close();
+  // });
 
-  test("Valid", async () => {
+  test.only("Valid", async () => {
     const response = await request(host, mutation(email, password));
     expect(response).toEqual({ register: null });
 
